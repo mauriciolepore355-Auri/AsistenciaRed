@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1a365d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AsistenciaRed">
+<title>AsistenciaRed — Sistema Institucional</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a202c}
+#loading{position:fixed;inset:0;background:#1a365d;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+#loading .sp{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#f6ad55;border-radius:50%;animation:spin 1s linear infinite;margin-top:18px}
+#loading p{color:rgba(255,255,255,.6);font-size:13px;margin-top:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login-screen{display:none;position:fixed;inset:0;background:linear-gradient(160deg,#1a365d 0%,#0d2240 100%);align-items:center;justify-content:center;z-index:500;padding:24px}
+#login-screen.on{display:flex}
+.login-box{background:white;border-radius:20px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .ico{font-size:48px}
+.login-logo h1{font-size:24px;font-weight:800;color:#1a365d;margin-top:6px}
+.login-logo h1 span{color:#f6ad55}
+.login-logo p{font-size:12px;color:#718096;margin-top:4px}
+.step{display:none}.step.on{display:block}
+.lbl{font-size:11px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.inp{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;transition:border-color .15s;margin-bottom:14px}
+.inp:focus{border-color:#3182ce;box-shadow:0 0 0 3px rgba(49,130,206,.1)}
+.inp-code{text-align:center;letter-spacing:4px;font-weight:700;font-size:18px;text-transform:uppercase}
+.btn-primary{width:100%;background:#1a365d;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:#2a4a7f}
+.btn-secondary{width:100%;background:#edf2f7;color:#4a5568;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.role-btn{padding:16px 10px;border:2px solid #e2e8f0;border-radius:12px;background:white;cursor:pointer;text-align:center;transition:all .15s}
+.role-btn:hover{border-color:#3182ce;background:#ebf8ff}
+.role-btn.sel{border-color:#1a365d;background:#ebf4ff}
+.role-btn .ricon{font-size:28px;display:block;margin-bottom:6px}
+.role-btn .rname{font-size:12px;font-weight:700;color:#2d3748}
+.role-btn .rdesc{font-size:10px;color:#718096;margin-top:2px}
+.err{background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;padding:10px 14px;font-size:13px;color:#c53030;margin-bottom:12px;display:none}
+.err.on{display:block}
+.back-link{text-align:center;margin-top:12px}
+.back-link a{font-size:13px;color:#3182ce;cursor:pointer;text-decoration:none}
+#app{display:none;flex-direction:column;min-height:100vh}
+#app.on{display:flex}
+#app-hdr{background:#1a365d;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#app-hdr .hdr-left h1{font-size:16px;font-weight:800}
+#app-hdr .hdr-left .hdr-sub{font-size:11px;opacity:.55;margin-top:2px}
+#app-hdr .hdr-right{display:flex;align-items:center;gap:10px}
+.role-badge{background:rgba(246,173,85,.2);border:1px solid rgba(246,173,85,.4);color:#f6ad55;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.logout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;font-size:12px;padding:5px 11px;border-radius:8px;cursor:pointer}
+#app-main{flex:1;padding:20px;max-width:1100px;margin:0 auto;width:100%}
+.card{background:white;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:16px}
+.card h2{font-size:15px;font-weight:700;color:#2d3748;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3{font-size:13px;font-weight:700;color:#4a5568;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:.4px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:white;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.stat-card .sv{font-size:28px;font-weight:800}
+.stat-card .sl{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.svg{color:#276749}.svr{color:#9b2c2c}.svb{color:#2b6cb0}.svy{color:#c05621}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+table th{background:#2d3748;color:white;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+table td{padding:10px 14px;border-bottom:1px solid #edf2f7}
+table tr:last-child td{border-bottom:none}
+table tr:hover td{background:#f7fafc}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-p{background:#c6f6d5;color:#22543d}
+.badge-a{background:#fed7d7;color:#9b2c2c}
+.badge-f{background:#fef3c7;color:#92400e}
+.badge-ok{background:#ebf4ff;color:#1a365d}
+.badge-red{background:#fed7d7;color:#9b2c2c}
+.badge-yellow{background:#fef3c7;color:#744210}
+.badge-gray{background:#edf2f7;color:#718096}
+.btn{padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-blue{background:#3182ce;color:white}.btn-blue:hover{background:#2b6cb0}
+.btn-green{background:#276749;color:white}.btn-green:hover{background:#22543d}
+.btn-red{background:#fff5f5;color:#c53030;border:1px solid #fed7d7}.btn-red:hover{background:#fed7d7}
+.btn-gray{background:#edf2f7;color:#4a5568}.btn-gray:hover{background:#e2e8f0}
+.btn-orange{background:#d69e2e;color:white}
+.form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.form-row .inp{margin-bottom:0;flex:1;min-width:160px}
+.empty-state{text-align:center;padding:40px 20px;color:#a0aec0}
+.empty-state .eico{font-size:40px;margin-bottom:10px}
+.empty-state p{font-size:14px;font-weight:600}
+/* Day nav */
+.day-nav{display:flex;align-items:center;gap:12px;background:white;border-radius:12px;padding:12px 16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.day-nav-btn{background:#edf2f7;border:none;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.day-nav-center{flex:1;text-align:center}
+.day-nav-date{font-size:16px;font-weight:700;color:#2d3748}
+.day-nav-dow{font-size:12px;color:#718096}
+.day-nav-hoy{background:#ebf8ff;color:#2b6cb0;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer}
+/* Tipo buttons */
+.tipo-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tbtn{border:2px solid transparent;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;background:white}
+.tbtn.tN{border-color:#cbd5e0;color:#4a5568}.tbtn.tN.sel{background:#2d3748;border-color:#2d3748;color:white}
+.tbtn.tF{border-color:#ed8936;color:#c05621}.tbtn.tF.sel{background:#ed8936;color:white}
+.tbtn.tP{border-color:#fc8181;color:#9b2c2c}.tbtn.tP.sel{background:#fc8181;color:white}
+.tbtn.tL{border-color:#63b3ed;color:#2b6cb0}.tbtn.tL.sel{background:#63b3ed;color:white}
+.tbtn.tJ{border-color:#805ad5;color:#553c9a}.tbtn.tJ.sel{background:#805ad5;color:white}
+/* Attendance rows */
+.att-row{display:flex;align-items:center;background:white;padding:10px 16px;border-bottom:1px solid #edf2f7;gap:10px;flex-wrap:wrap;min-height:50px}
+.att-row:first-child{border-radius:12px 12px 0 0}
+.att-row:last-child{border-radius:0 0 12px 12px;border-bottom:none}
+.att-row:only-child{border-radius:12px;border-bottom:none}
+.att-row.baja-row{opacity:.45;background:#f7fafc}
+.att-row.suspendido-row{background:#fffaf0}
+.att-name{flex:1;min-width:120px;font-size:13px;color:#2d3748}
+.att-name .lastname{font-weight:700}
+.att-tog{width:54px;height:38px;border-radius:8px;border:none;font-weight:800;font-size:14px;cursor:pointer;transition:all .1s}
+.att-tog:active{transform:scale(.9)}
+.togE{background:#edf2f7;color:#cbd5e0}
+.togP{background:#c6f6d5;color:#276749}
+.togA{background:#fed7d7;color:#9b2c2c}
+.togD{background:#e9d8fd;color:#553c9a;font-size:11px;cursor:default}
+.obs-input{width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;color:#4a5568;resize:none;height:32px;outline:none;transition:border-color .15s;flex-basis:100%;margin-top:4px}
+.obs-input:focus{border-color:#3182ce}
+.sec-hdr{background:#2d3748;color:#f6ad55;font-size:11px;font-weight:700;padding:8px 16px;letter-spacing:.6px;text-transform:uppercase;border-radius:12px 12px 0 0;margin-top:12px}
+.ctr-bar{display:flex;gap:10px;background:#1e4080;border-radius:12px;padding:12px;margin-bottom:14px}
+.ctr-item{flex:1;text-align:center}
+.ctr-val{font-size:22px;font-weight:800;color:white}
+.ctr-lbl{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+.ctr-val.vg{color:#68d391}.ctr-val.vr{color:#fc8181}.ctr-val.vb{color:#90cdf4}
+/* Tabs */
+.tabs{display:flex;gap:4px;background:white;border-radius:12px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:18px;overflow-x:auto}
+.tab{flex:1;padding:9px 14px;border:none;border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#718096;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tab.act{background:#1a365d;color:white}
+.tab:hover:not(.act){background:#edf2f7;color:#2d3748}
+/* Codes */
+.code-box{background:#ebf4ff;border:1px solid #bee3f8;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.code-box .code-lbl{font-size:11px;font-weight:700;color:#2b6cb0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.code-box .code-val{font-size:22px;font-weight:800;color:#1a365d;letter-spacing:3px;font-family:monospace}
+.code-copy{float:right;background:#3182ce;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-top:-2px}
+/* Modal */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px}
+.ov.open{display:flex}
+.mo{background:white;border-radius:16px;padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.mo h2{font-size:16px;font-weight:700;margin-bottom:18px;color:#2d3748}
+.mf{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal-hdr{text-align:center;font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;padding:6px 0}
+.cal-day{border-radius:8px;padding:8px 4px;text-align:center;min-height:52px;position:relative}
+.cal-day .cal-num{font-size:12px;font-weight:700;color:#2d3748}
+.cal-day .cal-dot{width:8px;height:8px;border-radius:50%;margin:4px auto 0}
+.cal-day.tiene-att{background:#f0fff4}.cal-day.tiene-att .cal-num{color:#276749}
+.cal-day.tiene-att .cal-dot{background:#276749}
+.cal-day.no-hab{background:#fffaf0}.cal-day.no-hab .cal-num{color:#c05621}
+.cal-day.no-hab .cal-dot{background:#f6ad55}
+.cal-day.sin-reg{background:#f7fafc}
+.cal-day.hoy .cal-num{background:#1a365d;color:white;border-radius:50%;width:24px;height:24px;line-height:24px;margin:0 auto}
+.cal-tipo-lbl{font-size:9px;color:#718096;margin-top:2px}
+/* Alert badges */
+.alert-red{background:#fed7d7;color:#9b2c2c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block}
+.alert-yellow{background:#fef3c7;color:#744210;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block}
+.estado-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#2d3748;color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#debug-err{display:none;position:fixed;bottom:0;left:0;right:0;background:#c53030;color:white;padding:12px;font-size:13px;z-index:99999}
+@media(max-width:600px){
+  #app-main{padding:12px}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .login-box{padding:28px 20px}
+  .roles{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="debug-err"></div>
+<div id="loading" style="display:none">
+  <div style="font-size:48px">📋</div>
+  <h2 style="color:white;font-size:20px;font-weight:800;margin-top:10px">AsistenciaRed</h2>
+  <div class="sp"></div>
+  <p>Conectando...</p>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="ico">📋</div>
+      <h1>Asistencia<span>Red</span></h1>
+      <p>Sistema institucional de asistencia</p>
+    </div>
+    <div class="step on" id="step-inst">
+      <div class="err" id="err-inst"></div>
+      <label class="lbl">Código de institución</label>
+      <input class="inp inp-code" id="inp-inst" type="text" placeholder="INST-XXXX" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="20">
+      <button class="btn-primary" onclick="window.checkInst()">Continuar →</button>
+      <div class="back-link" style="margin-top:16px"><a onclick="window.showAdmin()">¿Sos administrador? Registrá tu institución</a></div>
+    </div>
+    <div class="step" id="step-rol">
+      <p style="font-size:13px;color:#718096;margin-bottom:14px" id="inst-nombre-lbl"></p>
+      <div class="err" id="err-rol"></div>
+      <label class="lbl">¿Con qué rol ingresás?</label>
+      <div class="roles">
+        <button class="role-btn" onclick="selRol('docente',this)"><span class="ricon">👨‍🏫</span><span class="rname">Docente</span><span class="rdesc">Mis cursos</span></button>
+        <button class="role-btn" onclick="selRol('preceptor',this)"><span class="ricon">📋</span><span class="rname">Preceptor</span><span class="rdesc">Todos los cursos</span></button>
+        <button class="role-btn" onclick="selRol('directivo',this)"><span class="ricon">🏫</span><span class="rname">Directivo</span><span class="rdesc">Estadísticas</span></button>
+        <button class="role-btn" onclick="selRol('admin',this)"><span class="ricon">⚙️</span><span class="rname">Admin</span><span class="rdesc">Configuración</span></button>
+      </div>
+      <button class="btn-primary" onclick="checkRol()">Continuar →</button>
+      <div class="back-link"><a onclick="goStep('inst')">← Volver</a></div>
+    </div>
+    <div class="step" id="step-code">
+      <div class="err" id="err-code"></div>
+      <label class="lbl" id="code-lbl">Código de acceso</label>
+      <input class="inp inp-code" id="inp-code" type="text" placeholder="••••••" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="20">
+      <button class="btn-primary" onclick="checkCode()">Ingresar →</button>
+      <div class="back-link"><a onclick="goStep('rol')">← Volver</a></div>
+    </div>
+    <div class="step" id="step-admin">
+      <h3 style="font-size:14px;color:#2d3748;margin-bottom:14px">⚙️ Registrar institución nueva</h3>
+      <div class="err" id="err-admin"></div>
+      <label class="lbl">Nombre de la institución</label>
+      <input class="inp" id="adm-nombre" type="text" placeholder="Ej: CFI N°5 — Palermo">
+      <label class="lbl">Ciclo / Año lectivo</label>
+      <input class="inp" id="adm-ciclo" type="text" placeholder="2026">
+      <label class="lbl">Contraseña de administrador</label>
+      <input class="inp" id="adm-pass" type="password" placeholder="Mínimo 6 caracteres">
+      <button class="btn-primary" onclick="registrarInst()">Crear institución</button>
+      <div class="back-link"><a onclick="goStep('inst')">← Volver</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header id="app-hdr">
+    <div class="hdr-left">
+      <h1>📋 AsistenciaRed</h1>
+      <div class="hdr-sub" id="hdr-inst">—</div>
+    </div>
+    <div class="hdr-right">
+      <span class="role-badge" id="hdr-role">—</span>
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+  </header>
+  <main id="app-main">
+    <div id="view-docente" style="display:none"></div>
+    <div id="view-preceptor" style="display:none"></div>
+    <div id="view-directivo" style="display:none"></div>
+    <div id="view-admin" style="display:none"></div>
+  </main>
+</div>
+
+<!-- MODALES -->
+<div class="ov" id="md-curso">
+  <div class="mo">
+    <h2 id="md-curso-title">Nuevo curso</h2>
+    <label class="lbl">Nombre del curso</label>
+    <input class="inp" id="mc-nombre" type="text" placeholder="Ej: Carpintería 1">
+    <label class="lbl">Docente a cargo</label>
+    <select class="inp" id="mc-docente" style="appearance:auto"></select>
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-curso')">Cancelar</button>
+      <button class="btn btn-blue" onclick="guardarCurso()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-docente">
+  <div class="mo">
+    <h2>Nuevo docente</h2>
+    <label class="lbl">Nombre completo</label>
+    <input class="inp" id="md-nombre" type="text" placeholder="Ej: Lepore, Mauricio">
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-docente')">Cancelar</button>
+      <button class="btn btn-blue" onclick="guardarDocente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-alumnos">
+  <div class="mo" style="max-width:540px">
+    <h2 id="md-alumnos-title">Alumnos del curso</h2>
+    <div id="md-alumnos-body"></div>
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-alumnos')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-ficha">
+  <div class="mo" style="max-width:580px">
+    <h2 id="md-ficha-title">📋 Ficha del alumno</h2>
+    <div id="md-ficha-body"></div>
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-ficha')">Cancelar</button>
+      <button class="btn btn-blue" id="md-ficha-save">Guardar ficha</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-ciclo">
+  <div class="mo" style="max-width:520px">
+    <h2>🔄 Nuevo ciclo lectivo</h2>
+    <div id="md-ciclo-body"></div>
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-ciclo')">Cancelar</button>
+      <button class="btn btn-orange" onclick="window._confirmarNuevoCiclo()">Iniciar nuevo ciclo →</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-pass">
+  <div class="mo">
+    <h2>🔐 Cambiar contraseña de administrador</h2>
+    <div class="err" id="err-pass"></div>
+    <label class="lbl">Contraseña actual</label>
+    <input class="inp" id="pass-actual" type="password" placeholder="Contraseña actual">
+    <label class="lbl">Nueva contraseña</label>
+    <input class="inp" id="pass-nueva" type="password" placeholder="Mínimo 6 caracteres">
+    <label class="lbl">Confirmar nueva contraseña</label>
+    <input class="inp" id="pass-confirm" type="password" placeholder="Repetir contraseña">
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-pass')">Cancelar</button>
+      <button class="btn btn-blue" onclick="window.guardarCambioPass()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="md-transfer">
+  <div class="mo">
+    <h2>⇄ Transferir alumno</h2>
+    <p id="md-transfer-nombre" style="font-size:14px;color:#2d3748;margin-bottom:14px;font-weight:700"></p>
+    <label class="lbl">Transferir a:</label>
+    <select class="inp" id="transfer-destino" style="appearance:auto"></select>
+    <div class="mf">
+      <button class="btn btn-gray" onclick="closeMod('md-transfer')">Cancelar</button>
+      <button class="btn btn-blue" onclick="window._confirmarTransfer()">Transferir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✓ Listo</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+window.onerror=function(m,s,l){var d=document.getElementById('debug-err');if(d){d.style.display='block';d.textContent='Error: '+m+' (línea '+l+')';}};
+window.addEventListener('DOMContentLoaded',function(){document.getElementById('login-screen').classList.add('on');});
+
+const pad=n=>String(n).padStart(2,'0');
+function todayStr(){const n=new Date();return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function openMod(id){document.getElementById(id).classList.add('open');}
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+window.goStep=function(s){document.querySelectorAll('.step').forEach(x=>x.classList.remove('on'));document.getElementById('step-'+s).classList.add('on');};
+window.showAdmin=function(){window.goStep('admin');};
+window.logout=function(){if(!confirm('¿Cerrás sesión?'))return;localStorage.removeItem('ar_session');location.reload();};
+window.selRol=function(r,btn){window._loginRol=r;document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open'));});
+document.querySelectorAll('.ov').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+
+// ── FIREBASE ──
+const firebaseConfig={apiKey:"AIzaSyDr81gThqdqostywNhBoYJ94GPW6cBeLAA",authDomain:"asistencia-institucional-a7f19.firebaseapp.com",databaseURL:"https://asistencia-institucional-a7f19-default-rtdb.firebaseio.com",projectId:"asistencia-institucional-a7f19",storageBucket:"asistencia-institucional-a7f19.firebasestorage.app",messagingSenderId:"691319267002",appId:"1:691319267002:web:d513883343079200f02c83"};
+let db;
+try{const app=firebase.apps.length?firebase.app():firebase.initializeApp(firebaseConfig);db=app.database();}catch(e){document.getElementById('debug-err').style.display='block';document.getElementById('debug-err').textContent='Firebase error: '+e.message;}
+function ref(path){return db.ref(path);}
+function get(r){return r.get();}
+function set(r,d){return r.set(d);}
+function update(r,d){return r.update(d);}
+function push(r,d){return d!==undefined?r.push(d):r.push();}
+function remove(r){return r.remove();}
+function onValue(r,cb){r.on('value',snap=>cb(snap));}
+
+// ── ESTADO GLOBAL ──
+let SESSION=null,INST=null,curDate=todayStr(),curCursoId=null,editCursoId=null;
+const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIA=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function fmtFecha(d){const[y,m,dd]=d.split('-');return `${+dd} de ${MES[+m-1]} ${y}`;}
+function fmtDow(d){const[y,m,dd]=d.split('-');return DIA[new Date(+y,+m-1,+dd).getDay()];}
+function genCode(p){return p.toUpperCase()+'-'+Math.random().toString(36).substr(2,6).toUpperCase();}
+
+// ── ESTADO DEL ALUMNO ──
+function estadoColor(e){return{activo:'#276749',suspendido:'#c05621',baja:'#9b2c2c',egresado:'#718096'}[e]||'#276749';}
+function estadoLabel(e){return{activo:'Activo',suspendido:'Suspendido',baja:'Baja',egresado:'Egresado'}[e]||'Activo';}
+function esInactivo(e){return e==='baja'||e==='egresado';}
+
+// ── LOGIN ──
+let loginInstId=null,loginInstData=null,loginRol=null;
+window.checkInst=async function(){
+  const code=document.getElementById('inp-inst').value.trim().toUpperCase();
+  const err=document.getElementById('err-inst');err.classList.remove('on');
+  if(!code){err.textContent='Ingresá el código.';err.classList.add('on');return;}
+  try{const snap=await get(ref(`instituciones/${code}`));
+    if(!snap.exists()){err.textContent='Código no encontrado.';err.classList.add('on');return;}
+    loginInstId=code;loginInstData=snap.val();
+    document.getElementById('inst-nombre-lbl').textContent='🏫 '+loginInstData.nombre;
+    goStep('rol');
+  }catch(e){err.textContent='Error de conexión.';err.classList.add('on');}
+};
+window.checkRol=function(){
+  loginRol=window._loginRol||loginRol;
+  const err=document.getElementById('err-rol');
+  if(!loginRol){err.textContent='Seleccioná un rol.';err.classList.add('on');return;}
+  err.classList.remove('on');
+  const labels={docente:'Código del docente',preceptor:'Código de preceptoría',directivo:'Código de dirección',admin:'Contraseña de administrador'};
+  document.getElementById('code-lbl').textContent=labels[loginRol];
+  document.getElementById('inp-code').value='';goStep('code');
+};
+window.checkCode=async function(){
+  const code=document.getElementById('inp-code').value.trim().toUpperCase();
+  const err=document.getElementById('err-code');err.classList.remove('on');
+  if(!code){err.textContent='Ingresá el código.';err.classList.add('on');return;}
+  const data=loginInstData;
+  if(loginRol==='preceptor'){
+    if(code!==data.codes?.preceptor?.toUpperCase()){err.textContent='Código incorrecto.';err.classList.add('on');return;}
+    iniciarSesion({instId:loginInstId,instNombre:data.nombre,rol:'preceptor'});
+  }else if(loginRol==='directivo'){
+    if(code!==data.codes?.directivo?.toUpperCase()){err.textContent='Código incorrecto.';err.classList.add('on');return;}
+    iniciarSesion({instId:loginInstId,instNombre:data.nombre,rol:'directivo'});
+  }else if(loginRol==='admin'){
+    if(code!==data.adminPass?.toUpperCase()){err.textContent='Contraseña incorrecta.';err.classList.add('on');return;}
+    iniciarSesion({instId:loginInstId,instNombre:data.nombre,rol:'admin'});
+  }else if(loginRol==='docente'){
+    const docentes=data.docentes||{};let found=null;
+    for(const[id,doc]of Object.entries(docentes)){if(doc.codigo?.toUpperCase()===code){found={id,...doc};break;}}
+    if(!found){err.textContent='Código incorrecto.';err.classList.add('on');return;}
+    iniciarSesion({instId:loginInstId,instNombre:data.nombre,rol:'docente',docenteId:found.id,docenteNombre:found.nombre});
+  }
+};
+window.registrarInst=async function(){
+  const nombre=document.getElementById('adm-nombre').value.trim();
+  const ciclo=document.getElementById('adm-ciclo').value.trim();
+  const pass=document.getElementById('adm-pass').value.trim();
+  const err=document.getElementById('err-admin');err.classList.remove('on');
+  if(!nombre||!ciclo||!pass){err.textContent='Completá todos los campos.';err.classList.add('on');return;}
+  if(pass.length<6){err.textContent='La contraseña debe tener al menos 6 caracteres.';err.classList.add('on');return;}
+  const instId=genCode('INST');
+  const data={nombre,ciclo,adminPass:pass.toUpperCase(),codes:{preceptor:genCode('PREC'),directivo:genCode('DIR')},docentes:{},cursos:{}};
+  try{await set(ref(`instituciones/${instId}`),data);loginInstId=instId;loginInstData=data;iniciarSesion({instId,instNombre:nombre,rol:'admin'});}
+  catch(e){err.textContent='Error al crear. Intentá de nuevo.';err.classList.add('on');}
+};
+
+// ── SESIÓN ──
+function iniciarSesion(sess){
+  SESSION=sess;localStorage.setItem('ar_session',JSON.stringify(sess));
+  document.getElementById('login-screen').classList.remove('on');
+  document.getElementById('app').classList.add('on');
+  document.getElementById('hdr-inst').textContent=sess.instNombre;
+  const rl={docente:'👨‍🏫 Docente',preceptor:'📋 Preceptor',directivo:'🏫 Directivo',admin:'⚙️ Administrador'};
+  document.getElementById('hdr-role').textContent=rl[sess.rol]||sess.rol;
+  cargarInstYMostrar();
+}
+function cargarInstYMostrar(){
+  onValue(ref(`instituciones/${SESSION.instId}`),snap=>{INST=snap.val();mostrarVista();});
+}
+function mostrarVista(){
+  ['docente','preceptor','directivo','admin'].forEach(r=>document.getElementById('view-'+r).style.display='none');
+  const v=document.getElementById('view-'+SESSION.rol);if(v)v.style.display='block';
+  if(SESSION.rol==='docente')renderDocente();
+  if(SESSION.rol==='preceptor')renderPreceptor();
+  if(SESSION.rol==='directivo')renderDirectivo();
+  if(SESSION.rol==='admin')renderAdmin();
+}
+
+// ══════════════════════════════════════
+//  HELPERS COMUNES
+// ══════════════════════════════════════
+function diasHabilesInfo(cursoId){
+  const att=INST.asistencia?.[cursoId]||{};
+  return Object.entries(att).filter(([,d])=>!d._tipo||d._tipo==='').length;
+}
+function alertaBadge(pctA){
+  if(pctA===null)return '';
+  if(pctA<80&&pctA>=70)return `<span class="alert-yellow">⚠ ${100-pctA}% inasist.</span>`;
+  if(pctA<70)return `<span class="alert-red">🔴 ${100-pctA}% inasist.</span>`;
+  return '';
+}
+function statsAlumno(cursoId,key){
+  const att=INST.asistencia?.[cursoId]||{};
+  let p=0,a=0,dias=0;
+  Object.entries(att).forEach(([,d])=>{
+    if(d._tipo&&d._tipo!=='')return;
+    dias++;
+    if(d[key]==='P')p++;else if(d[key]==='A')a++;
+  });
+  const pctA=dias>0?Math.round(p/dias*100):null;
+  const pctI=dias>0?Math.round(a/dias*100):null;
+  return{p,a,dias,pctA,pctI};
+}
+function fmtNombre(n){const parts=n.split(',');return parts.length>1?`<span class="lastname">${parts[0]},</span>${parts.slice(1).join(',')}`:`<span class="lastname">${n}</span>`;}
+
+// ══════════════════════════════════════
+//  VISTA DOCENTE
+// ══════════════════════════════════════
+function renderDocente(){
+  const cursos=Object.entries(INST.cursos||{}).filter(([id,c])=>c.docenteId===SESSION.docenteId);
+  if(!cursos.length){
+    document.getElementById('view-docente').innerHTML=`<div class="empty-state"><div class="eico">📚</div><p>No tenés cursos asignados.</p><small>Contactá al administrador.</small></div>`;return;
+  }
+  if(!curCursoId||!cursos.find(([id])=>id===curCursoId))curCursoId=cursos[0][0];
+  if(!window._vistaDoc)window._vistaDoc='asistencia';
+  let html=`<div class="tabs">${cursos.map(([id,c])=>`<button class="tab${id===curCursoId?' act':''}" onclick="window._setCurso('${id}')">${c.nombre}</button>`).join('')}</div>`;
+  html+=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="btn${window._vistaDoc==='asistencia'?' btn-blue':' btn-gray'}" onclick="window._setVistaDoc('asistencia')">📋 Asistencia</button>
+    <button class="btn${window._vistaDoc==='resumen'?' btn-blue':' btn-gray'}" onclick="window._setVistaDoc('resumen')">📊 Resumen</button>
+    <button class="btn${window._vistaDoc==='calendario'?' btn-blue':' btn-gray'}" onclick="window._setVistaDoc('calendario')">📅 Calendario</button>
+  </div>`;
+  if(window._vistaDoc==='resumen')html+=renderDocenteResumen(curCursoId);
+  else if(window._vistaDoc==='calendario')html+=renderCalendario(curCursoId);
+  else html+=renderDocenteDia(curCursoId);
+  document.getElementById('view-docente').innerHTML=html;
+}
+window._setCurso=function(id){curCursoId=id;renderDocente();};
+window._setVistaDoc=function(v){window._vistaDoc=v;renderDocente();};
+
+// ── Resumen docente ──
+function renderDocenteResumen(cursoId){
+  const curso=INST.cursos?.[cursoId];if(!curso)return'';
+  const att=INST.asistencia?.[cursoId]||{};
+  const varones=curso.varones||[];const mujeres=curso.mujeres||[];const domi=curso.domi||[];
+  const prefMap={varones:'v',mujeres:'m',domi:'d'};
+  function alumnos(tipo){
+    return (curso[tipo]||[]).map((n,i)=>{const px=prefMap[tipo];const k=px+i;const st=statsAlumno(cursoId,k);const estado=curso.alumnosData?.[k]?.estado||'activo';return{n,k,st,estado,inactivo:esInactivo(estado)};});
+  }
+  const todosV=alumnos('varones'),todosM=alumnos('mujeres'),todosD=alumnos('domi');
+  const activos=[...todosV,...todosM].filter(a=>!a.inactivo);
+  const diasH=diasHabilesInfo(cursoId);
+  let totP=0,totA=0,totPos=0;
+  activos.forEach(({st})=>{totP+=st.p;totA+=st.a;totPos+=st.dias;});
+  const pctG=totPos>0?Math.round(totP/totPos*100):null;
+  const pctI=totPos>0?Math.round(totA/totPos*100):null;
+
+  function sc(val,lbl,color){return `<div class="stat-card"><div class="sv" style="color:${color};font-size:22px;font-weight:900;">${val!==null?val:'—'}</div><div class="sl">${lbl}</div></div>`;}
+  let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <button class="btn btn-blue" onclick="window._exportarPDF('${cursoId}')">📄 Exportar PDF</button>
+  </div>
+  <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+    ${sc([...todosV,...todosM,...todosD].length,'Total inscriptos','#2b6cb0')}
+    ${sc(activos.length,'Activos','#276749')}
+    ${sc(diasH,'Días hábiles','#2b6cb0')}
+    ${sc(totP,'Asistencias','#276749')}
+    ${sc(totA,'Inasistencias','#9b2c2c')}
+    ${sc(pctG!==null?pctG+'%':null,'% Asistencia',pctG>=75?'#276749':'#9b2c2c')}
+  </div>`;
+
+  function filaAlumno(n,k,st,estado,inactivo){
+    const pctColor=st.pctA===null?'#718096':st.pctA>=75?'#276749':'#9b2c2c';
+    const alert=!inactivo?alertaBadge(st.pctA):'';
+    const estadoBadge=inactivo?`<span class="badge-gray badge" style="font-size:10px;">${estadoLabel(estado)}</span>`:'';
+    return `<tr style="${inactivo?'opacity:.5':''}"">
+      <td>${n} ${alert} ${estadoBadge}</td>
+      <td style="text-align:center;color:#276749;font-weight:700">${inactivo?'—':st.p}</td>
+      <td style="text-align:center;color:#9b2c2c;font-weight:700">${inactivo?'—':st.a}</td>
+      <td style="text-align:center;font-weight:800;color:${pctColor}">${inactivo?'—':st.pctA!==null?st.pctA+'%':'—'}</td>
+    </tr>`;
+  }
+
+  html+=`<div class="card"><h2>📋 Detalle por alumno</h2><div class="table-wrap"><table>
+    <tr><th>Alumno</th><th>Asist.</th><th>Inasist.</th><th>% Asist.</th></tr>`;
+  if(todosV.length){html+=`<tr><td colspan="4" style="background:#f7fafc;font-weight:700;font-size:11px;color:#718096;text-transform:uppercase;padding:6px 12px">♂ Varones</td></tr>`;todosV.forEach(({n,k,st,estado,inactivo})=>{html+=filaAlumno(n,k,st,estado,inactivo);});}
+  if(todosM.length){html+=`<tr><td colspan="4" style="background:#f7fafc;font-weight:700;font-size:11px;color:#718096;text-transform:uppercase;padding:6px 12px">♀ Mujeres</td></tr>`;todosM.forEach(({n,k,st,estado,inactivo})=>{html+=filaAlumno(n,k,st,estado,inactivo);});}
+  if(todosD.length){html+=`<tr><td colspan="4" style="background:#f7fafc;font-weight:700;font-size:11px;color:#718096;text-transform:uppercase;padding:6px 12px">🏠 Domiciliarios</td></tr>`;todosD.forEach(({n})=>{html+=`<tr><td>${n}</td><td colspan="3" style="text-align:center;color:#718096;font-size:12px">Domiciliario</td></tr>`;});}
+  html+=`</table></div></div>`;
+  return html;
+}
+
+// ── Calendario ──
+function renderCalendario(cursoId){
+  const ahora=new Date();const Y=ahora.getFullYear();const M=ahora.getMonth();
+  const att=INST.asistencia?.[cursoId]||{};
+  const hoyStr=todayStr();
+  const diasEnMes=new Date(Y,M+1,0).getDate();
+  const primerDia=new Date(Y,M,1).getDay();
+  const mes=`${Y}-${pad(M+1)}`;
+  let html=`<div class="card"><h2>📅 ${MES[M]} ${Y}</h2><div class="cal-grid">`;
+  ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(d=>{html+=`<div class="cal-hdr">${d}</div>`;});
+  for(let i=0;i<primerDia;i++)html+=`<div></div>`;
+  for(let d=1;d<=diasEnMes;d++){
+    const ds=`${Y}-${pad(M+1)}-${pad(d)}`;
+    const registro=att[ds];
+    let cls='cal-day sin-reg';let tipo='';let label='';
+    if(registro!==undefined){tipo=registro._tipo||'';if(tipo==='')cls='cal-day tiene-att';else{cls='cal-day no-hab';const lblMap={F:'Feriado',P:'Paro',L:'Lluvia',J:'Jornada'};label=lblMap[tipo]||tipo;}}
+    if(ds===hoyStr)cls+=' hoy';
+    html+=`<div class="${cls}"><div class="cal-num">${d}</div>`;
+    if(registro!==undefined)html+=`<div class="cal-dot"></div>`;
+    if(label)html+=`<div class="cal-tipo-lbl">${label}</div>`;
+    html+=`</div>`;
+  }
+  html+=`</div>
+    <div style="display:flex;gap:12px;margin-top:14px;font-size:12px;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#276749;margin-right:4px"></span>Clase registrada</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f6ad55;margin-right:4px"></span>Día no hábil</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e2e8f0;margin-right:4px"></span>Sin registro</span>
+    </div>
+  </div>`;
+  return html;
+}
+
+// ── Día ──
+function renderDocenteDia(cursoId){
+  const curso=INST.cursos?.[cursoId];if(!curso)return'';
+  const att=INST.asistencia?.[cursoId]?.[curDate]||{};
+  const tipo=att._tipo||'';
+  const varones=curso.varones||[];const mujeres=curso.mujeres||[];const domi=curso.domi||[];
+  const disabled=tipo!=='';
+  const prefMap={varones:'v',mujeres:'m',domi:'d'};
+
+  const activosV=varones.filter((_,i)=>!esInactivo(curso.alumnosData?.['v'+i]?.estado));
+  const activosM=mujeres.filter((_,i)=>!esInactivo(curso.alumnosData?.['m'+i]?.estado));
+  const p=activosV.filter((_,i)=>{const ri=varones.indexOf(_);return att['v'+ri]==='P';}).length+activosM.filter((_,i)=>{const ri=mujeres.indexOf(_);return att['m'+ri]==='P';}).length;
+  // Simpler count
+  let cntP=0,cntA=0;
+  varones.forEach((_,i)=>{if(esInactivo(curso.alumnosData?.['v'+i]?.estado))return;if(att['v'+i]==='P')cntP++;else if(att['v'+i]==='A')cntA++;});
+  mujeres.forEach((_,i)=>{if(esInactivo(curso.alumnosData?.['m'+i]?.estado))return;if(att['m'+i]==='P')cntP++;else if(att['m'+i]==='A')cntA++;});
+  const totalActivos=varones.filter((_,i)=>!esInactivo(curso.alumnosData?.['v'+i]?.estado)).length+mujeres.filter((_,i)=>!esInactivo(curso.alumnosData?.['m'+i]?.estado)).length;
+  const cntS=totalActivos-cntP-cntA;
+
+  let html=`<div class="day-nav">
+    <button class="day-nav-btn" onclick="window._prevDay()">◀</button>
+    <div class="day-nav-center"><div class="day-nav-date">${fmtFecha(curDate)}</div><div class="day-nav-dow">${fmtDow(curDate)}</div></div>
+    <button class="day-nav-btn" onclick="window._nextDay()">▶</button>
+    <button class="day-nav-hoy" onclick="window._goHoy()">Hoy</button>
+  </div>`;
+
+  html+=`<div class="tipo-row">`;
+  [['','Normal'],['F','📅 Feriado'],['P','🚫 Paro'],['L','🌧 Lluvia'],['J','📝 Jornada']].forEach(([t,lbl])=>{
+    const cls=t===''?'tN':t==='F'?'tF':t==='P'?'tP':t==='L'?'tL':'tJ';
+    html+=`<button class="tbtn ${cls}${tipo===t?' sel':''}" onclick="window._setTipo('${cursoId}','${t}')">${lbl}</button>`;
+  });
+  html+=`</div>`;
+
+  const diaExiste=INST.asistencia?.[cursoId]?.[curDate]!==undefined;
+  if(!diaExiste){
+    html+=`<div class="empty-state" style="background:white;border-radius:14px;padding:40px 20px">
+      <div class="eico">📅</div><p>Este día no está registrado como clase.</p>
+      <br><button class="btn btn-blue" onclick="window._agregarDia('${cursoId}')">+ Agregar este día</button>
+    </div>`;
+    return html;
+  }
+
+  if(tipo!==''){
+    const lbl={F:'Feriado',P:'Paro docente',L:'Día lluvioso',J:'Jornada docente'}[tipo];
+    html+=`<div style="background:#fefcbf;border-left:4px solid #f6ad55;border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:14px;color:#744210;font-size:13px"><strong>${lbl}</strong> — Este día no cuenta como hábil.</div>`;
+  } else {
+    html+=`<div class="ctr-bar">
+      <div class="ctr-item"><div class="ctr-val vg" id="cnt-p">${cntP}</div><div class="ctr-lbl">Presentes</div></div>
+      <div class="ctr-item"><div class="ctr-val vr" id="cnt-a">${cntA}</div><div class="ctr-lbl">Ausentes</div></div>
+      <div class="ctr-item"><div class="ctr-val vb" id="cnt-s">${cntS}</div><div class="ctr-lbl">Sin marcar</div></div>
+    </div>`;
+  }
+
+  function attRow(nombre,key,val,estado){
+    const inactivo=esInactivo(estado);
+    const cls=inactivo?'togD':disabled?'togE':val==='P'?'togP':val==='A'?'togA':'togE';
+    const lbl=inactivo?estadoLabel(estado)[0]:disabled?'·':val||'·';
+    const obs=att['obs_'+key]||'';
+    const estadoInfo=estado&&estado!=='activo'?`<span class="estado-dot" style="background:${estadoColor(estado)}"></span>`:'';
+    const rowCls='att-row'+(estado==='baja'||estado==='egresado'?' baja-row':estado==='suspendido'?' suspendido-row':'');
+    return `<div class="${rowCls}">
+      <div class="att-name">${estadoInfo}${fmtNombre(nombre)}</div>
+      <button class="att-tog ${cls}" id="tog-${key}" ${(disabled||inactivo)?'disabled':''}
+        onclick="window._togAtt('${cursoId}','${curDate}','${key}',this)">${lbl}</button>
+      ${!disabled&&!inactivo?`<input class="obs-input" placeholder="Observación..." value="${obs.replace(/"/g,'&quot;')}"
+        onchange="window._debouncedObs('${cursoId}','${curDate}','${key}',this.value)">`:obs?`<span style="font-size:11px;color:#718096;font-style:italic;flex-basis:100%">${obs}</span>`:''}
+    </div>`;
+  }
+
+  if(varones.length){html+=`<div class="sec-hdr">♂ Varones</div>`;varones.forEach((n,i)=>{html+=attRow(n,'v'+i,att['v'+i]||'',curso.alumnosData?.['v'+i]?.estado||'activo');});}
+  if(mujeres.length){html+=`<div class="sec-hdr" style="margin-top:14px">♀ Mujeres</div>`;mujeres.forEach((n,i)=>{html+=attRow(n,'m'+i,att['m'+i]||'',curso.alumnosData?.['m'+i]?.estado||'activo');});}
+  if(domi.length){html+=`<div class="sec-hdr" style="margin-top:14px">🏠 Domiciliarios</div>`;domi.forEach(n=>{html+=`<div class="att-row"><div class="att-name">${fmtNombre(n)}</div><button class="att-tog togD" disabled>D</button></div>`;});}
+
+  // Notas del día
+  if(!disabled){
+    const notas=att._notas||'';
+    html+=`<div class="card" style="margin-top:14px">
+      <h3>📝 Notas del día</h3>
+      <textarea class="inp" id="notas-dia" placeholder="Temas dados, actividades, observaciones generales..."
+        style="height:80px;resize:vertical;font-size:13px"
+        onchange="window._setNotas('${cursoId}','${curDate}',this.value)">${notas}</textarea>
+    </div>`;
+  }
+
+  // Registro de actividad
+  if(att._registrado){
+    html+=`<p style="text-align:center;font-size:11px;color:#a0aec0;margin-top:6px">
+      Registrado por <strong>${att._registrado.nombre||'—'}</strong>
+    </p>`;
+  }
+
+  html+=`<div style="text-align:center;margin-top:12px">
+    <button onclick="window._eliminarDia('${cursoId}','${curDate}')" style="background:none;border:none;color:#e53e3e;font-size:12px;cursor:pointer;font-weight:600">🗑 Eliminar este día</button>
+  </div>`;
+  return html;
+}
+
+window._prevDay=function(){const d=new Date(curDate+'T12:00');d.setDate(d.getDate()-1);curDate=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;renderDocente();};
+window._nextDay=function(){const d=new Date(curDate+'T12:00');d.setDate(d.getDate()+1);curDate=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;renderDocente();};
+window._goHoy=function(){curDate=todayStr();renderDocente();};
+window._setTipo=async function(cursoId,tipo){await update(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${curDate}`),{_tipo:tipo});};
+window._agregarDia=async function(cursoId){
+  const data={_tipo:'',_registrado:{nombre:SESSION.docenteNombre||'Administrador',ts:Date.now()}};
+  await set(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${curDate}`),data);
+};
+window._eliminarDia=async function(cursoId,fecha){
+  if(!confirm(`¿Eliminás el registro del ${fmtFecha(fecha)}?`))return;
+  await remove(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${fecha}`));
+};
+window._togAtt=async function(cursoId,fecha,key,btn){
+  const cur=btn.textContent.trim();
+  const nxt=cur===''||cur==='·'?'P':cur==='P'?'A':'';
+  btn.textContent=nxt||'·';btn.className='att-tog '+(nxt==='P'?'togP':nxt==='A'?'togA':'togE');
+  await update(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${fecha}`),{[key]:nxt});
+  const curso=INST.cursos?.[cursoId];
+  let cp=0,ca=0;
+  (curso.varones||[]).forEach((_,i)=>{if(esInactivo(curso.alumnosData?.['v'+i]?.estado))return;const v=i===+key.slice(1)&&key[0]==='v'?nxt:(INST.asistencia?.[cursoId]?.[fecha]?.['v'+i]||'');if(v==='P')cp++;else if(v==='A')ca++;});
+  (curso.mujeres||[]).forEach((_,i)=>{if(esInactivo(curso.alumnosData?.['m'+i]?.estado))return;const v=i===+key.slice(1)&&key[0]==='m'?nxt:(INST.asistencia?.[cursoId]?.[fecha]?.['m'+i]||'');if(v==='P')cp++;else if(v==='A')ca++;});
+  // simple recount from DOM
+  let p=0,a=0;
+  document.querySelectorAll('.att-tog.togP').forEach(()=>p++);
+  document.querySelectorAll('.att-tog.togA').forEach(()=>a++);
+  const total=document.querySelectorAll('.att-tog:not(.togD)').length;
+  const ep=document.getElementById('cnt-p'),ea=document.getElementById('cnt-a'),es=document.getElementById('cnt-s');
+  if(ep)ep.textContent=p;if(ea)ea.textContent=a;if(es)es.textContent=total-p-a;
+};
+
+const _obsTimers={};
+window._debouncedObs=function(cursoId,fecha,key,value){
+  const k=cursoId+fecha+key;clearTimeout(_obsTimers[k]);
+  _obsTimers[k]=setTimeout(async()=>{await update(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${fecha}`),{['obs_'+key]:value});},700);
+};
+const _notasTimer={};
+window._setNotas=function(cursoId,fecha,value){
+  clearTimeout(_notasTimer.t);
+  _notasTimer.t=setTimeout(async()=>{await update(ref(`instituciones/${SESSION.instId}/asistencia/${cursoId}/${fecha}`),{_notas:value});},700);
+};
+
+// ── Export PDF ──
+window._exportarPDF=function(cursoId){
+  const curso=INST.cursos?.[cursoId];if(!curso)return;
+  const att=INST.asistencia?.[cursoId]||{};
+  const fechas=Object.keys(att).filter(f=>!att[f]._tipo||att[f]._tipo==='').sort();
+  const varones=curso.varones||[];const mujeres=curso.mujeres||[];
+  const instNombre=INST.nombre||SESSION.instId;
+
+  function filaAlumno(nombre,key){
+    const st=statsAlumno(cursoId,key);
+    const estado=curso.alumnosData?.[key]?.estado||'activo';
+    const pctColor=st.pctA>=75?'#276749':'#c53030';
+    return `<tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${nombre}${esInactivo(estado)?` <em style="color:#a0aec0;font-size:11px">(${estadoLabel(estado)})</em>`:''}</td>
+      <td style="text-align:center;padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#276749;font-weight:700">${esInactivo(estado)?'—':st.p}</td>
+      <td style="text-align:center;padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#c53030;font-weight:700">${esInactivo(estado)?'—':st.a}</td>
+      <td style="text-align:center;padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:800;color:${pctColor}">${esInactivo(estado)||st.pctA===null?'—':st.pctA+'%'}</td>
+    </tr>`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Asistencia — ${curso.nombre}</title>
+  <style>body{font-family:Arial,sans-serif;padding:24px;color:#1a202c}h1{font-size:20px;color:#1a365d}h2{font-size:14px;color:#4a5568;margin:16px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#2d3748;color:white;padding:8px 10px;text-align:left}@media print{@page{margin:1.5cm}}</style>
+  </head><body>
+  <h1>📋 AsistenciaRed — Informe de Asistencia</h1>
+  <p style="color:#718096;font-size:13px">${instNombre} · Ciclo ${INST.ciclo||'—'} · Curso: <strong>${curso.nombre}</strong> · ${fechas.length} días hábiles registrados</p>
+  <p style="font-size:12px;color:#a0aec0">Generado el ${fmtFecha(todayStr())}</p>
+  <h2>Resumen por alumno</h2>
+  <table><tr><th>Alumno</th><th>Presencias</th><th>Ausencias</th><th>% Asistencia</th></tr>
+  ${varones.length?'<tr><td colspan="4" style="background:#f7fafc;font-weight:700;font-size:11px;color:#718096;text-transform:uppercase;padding:5px 10px">♂ Varones</td></tr>':''}
+  ${varones.map((n,i)=>filaAlumno(n,'v'+i)).join('')}
+  ${mujeres.length?'<tr><td colspan="4" style="background:#f7fafc;font-weight:700;font-size:11px;color:#718096;text-transform:uppercase;padding:5px 10px">♀ Mujeres</td></tr>':''}
+  ${mujeres.map((n,i)=>filaAlumno(n,'m'+i)).join('')}
+  </table></body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);win.document.close();win.focus();
+  setTimeout(()=>win.print(),400);
+};
+
+// ══════════════════════════════════════
+//  VISTA PRECEPTOR
+// ══════════════════════════════════════
+function renderPreceptor(){
+  const cursos=Object.entries(INST.cursos||{});
+  if(!cursos.length){document.getElementById('view-preceptor').innerHTML=`<div class="empty-state"><div class="eico">📚</div><p>No hay cursos.</p></div>`;return;}
+  if(!window._vistaPrec)window._vistaPrec='dia';
+  if(!window._resumenCursoPrec)window._resumenCursoPrec=null;
+  if(!window._precCursoActivo)window._precCursoActivo=null;
+
+  let html=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="btn${window._vistaPrec==='dia'?' btn-blue':' btn-gray'}" onclick="window._setVistaPrec('dia')">📋 Día</button>
+    <button class="btn${window._vistaPrec==='resumen'?' btn-blue':' btn-gray'}" onclick="window._setVistaPrec('resumen')">📊 Resumen</button>
+  </div>`;
+
+  if(window._vistaPrec==='resumen'){
+    html+=`<div class="tabs" style="margin-bottom:12px">`;
+    cursos.forEach(([id,c])=>{html+=`<button class="tab${window._resumenCursoPrec===id?' act':''}" onclick="window._setPrecCurso('${id}')">${c.nombre}</button>`;});
+    html+=`</div>`;
+    const cid=window._resumenCursoPrec||cursos[0][0];window._resumenCursoPrec=cid;
+    html+=renderDocenteResumen(cid);
+  }else if(window._precCursoActivo){
+    const cid=window._precCursoActivo;
+    html+=`<button class="btn btn-gray" style="margin-bottom:12px" onclick="window._precCursoActivo=null;renderPreceptor()">← Volver</button>`;
+    html+=`<div style="background:#fffaf0;border-left:4px solid #f6ad55;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#744210"><strong>Tomando asistencia como preceptor</strong></div>`;
+    html+=renderDocenteDia(cid);
+  }else{
+    html+=`<div class="day-nav">
+      <button class="day-nav-btn" onclick="window._prevDayP()">◀</button>
+      <div class="day-nav-center"><div class="day-nav-date">${fmtFecha(curDate)}</div><div class="day-nav-dow">${fmtDow(curDate)}</div></div>
+      <button class="day-nav-btn" onclick="window._nextDayP()">▶</button>
+      <button class="day-nav-hoy" onclick="window._goHoyP()">Hoy</button>
+    </div>`;
+    html+=`<div class="card"><h2>📋 Todos los cursos</h2><div class="table-wrap"><table>
+      <tr><th>Curso</th><th>Docente</th><th>Estado</th><th>P</th><th>A</th><th>Alertas</th><th></th></tr>`;
+    cursos.forEach(([id,curso])=>{
+      const attDia=INST.asistencia?.[id]?.[curDate];const tipo=attDia?._tipo||'';
+      const diaExiste=attDia!==undefined;
+      const docente=INST.docentes?.[curso.docenteId]?.nombre||'—';
+      // Calcular alertas
+      let alertCount=0;
+      (curso.varones||[]).forEach((_,i)=>{if(!esInactivo(curso.alumnosData?.['v'+i]?.estado)){const st=statsAlumno(id,'v'+i);if(st.pctA!==null&&st.pctA<80)alertCount++;}});
+      (curso.mujeres||[]).forEach((_,i)=>{if(!esInactivo(curso.alumnosData?.['m'+i]?.estado)){const st=statsAlumno(id,'m'+i);if(st.pctA!==null&&st.pctA<80)alertCount++;}});
+      const alertBadge=alertCount>0?`<span class="alert-${alertCount>3?'red':'yellow'}">${alertCount}</span>`:'—';
+      if(!diaExiste){
+        html+=`<tr><td><strong>${curso.nombre}</strong></td><td>${docente}</td>
+          <td><span class="badge badge-gray">Sin registrar</span></td><td>—</td><td>—</td>
+          <td>${alertBadge}</td>
+          <td><button class="btn btn-blue" style="padding:4px 10px;font-size:12px" onclick="window._precTomarAsistencia('${id}')">Tomar</button></td></tr>`;
+        return;
+      }
+      if(tipo!==''){
+        const lbl={F:'Feriado',P:'Paro',L:'Lluvia',J:'Jornada'}[tipo];
+        html+=`<tr><td><strong>${curso.nombre}</strong></td><td>${docente}</td><td><span class="badge badge-f">${lbl}</span></td><td>—</td><td>—</td><td>${alertBadge}</td><td></td></tr>`;
+        return;
+      }
+      let cp=0,ca=0;
+      (curso.varones||[]).forEach((_,i)=>{if(!esInactivo(curso.alumnosData?.['v'+i]?.estado)){if(attDia['v'+i]==='P')cp++;else if(attDia['v'+i]==='A')ca++;}});
+      (curso.mujeres||[]).forEach((_,i)=>{if(!esInactivo(curso.alumnosData?.['m'+i]?.estado)){if(attDia['m'+i]==='P')cp++;else if(attDia['m'+i]==='A')ca++;}});
+      html+=`<tr><td><strong>${curso.nombre}</strong></td><td>${docente}</td>
+        <td><span class="badge badge-ok">Registrada</span></td>
+        <td style="color:#276749;font-weight:800">${cp}</td><td style="color:#9b2c2c;font-weight:800">${ca}</td>
+        <td>${alertBadge}</td><td></td></tr>`;
+    });
+    html+=`</table></div></div>`;
+  }
+  document.getElementById('view-preceptor').innerHTML=html;
+}
+window._precTomarAsistencia=function(id){window._precCursoActivo=id;renderPreceptor();};
+window._setVistaPrec=function(v){window._vistaPrec=v;window._precCursoActivo=null;renderPreceptor();};
+window._setPrecCurso=function(id){window._resumenCursoPrec=id;renderPreceptor();};
+window._prevDayP=function(){const d=new Date(curDate+'T12:00');d.setDate(d.getDate()-1);curDate=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;window._precCursoActivo=null;renderPreceptor();};
+window._nextDayP=function(){const d=new Date(curDate+'T12:00');d.setDate(d.getDate()+1);curDate=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;window._precCursoActivo=null;renderPreceptor();};
+window._goHoyP=function(){curDate=todayStr();window._precCursoActivo=null;renderPreceptor();};
+
+// ══════════════════════════════════════
+//  VISTA DIRECTIVO
+// ══════════════════════════════════════
+function renderDirectivo(){
+  if(!window._vistaDir)window._vistaDir='global';
+  if(!window._resumenCursoDir)window._resumenCursoDir=null;
+  const cursos=Object.entries(INST.cursos||{});
+  const totalAlumnos=cursos.reduce((s,[,c])=>s+(c.varones||[]).length+(c.mujeres||[]).length+(c.domi||[]).length,0);
+  const totalDocentes=Object.keys(INST.docentes||{}).length;
+  const now=new Date(),Y=now.getFullYear(),M=now.getMonth()+1;
+  const prefix=`${Y}-${pad(M)}-`;
+  let totP=0,totA=0,totPos=0;
+  cursos.forEach(([id,c])=>{
+    Object.entries(INST.asistencia?.[id]||{}).forEach(([fecha,datos])=>{
+      if(!fecha.startsWith(prefix)||datos._tipo)return;
+      totP+=(c.varones||[]).filter((_,i)=>datos['v'+i]==='P').length+(c.mujeres||[]).filter((_,i)=>datos['m'+i]==='P').length;
+      totA+=(c.varones||[]).filter((_,i)=>datos['v'+i]==='A').length+(c.mujeres||[]).filter((_,i)=>datos['m'+i]==='A').length;
+      totPos+=(c.varones||[]).length+(c.mujeres||[]).length;
+    });
+  });
+  const pctGlobal=totPos>0?Math.round(totP/totPos*100):null;
+
+  let html=`<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="btn${window._vistaDir==='global'?' btn-blue':' btn-gray'}" onclick="window._setVistaDir('global')">🏫 Global</button>
+    <button class="btn${window._vistaDir==='resumen'?' btn-blue':' btn-gray'}" onclick="window._setVistaDir('resumen')">📊 Por curso</button>
+    <button class="btn${window._vistaDir==='alertas'?' btn-red':' btn-gray'}" onclick="window._setVistaDir('alertas')">⚠️ Alertas</button>
+  </div>`;
+
+  if(window._vistaDir==='alertas'){
+    html+=`<div class="card"><h2>⚠️ Alumnos en riesgo de inasistencias</h2>`;
+    let hayAlertas=false;
+    html+=`<div class="table-wrap"><table><tr><th>Alumno</th><th>Curso</th><th>% Asistencia</th><th>Inasistencias</th></tr>`;
+    cursos.forEach(([id,c])=>{
+      [...(c.varones||[]).map((n,i)=>({n,k:'v'+i})),...(c.mujeres||[]).map((n,i)=>({n,k:'m'+i}))].forEach(({n,k})=>{
+        if(esInactivo(c.alumnosData?.[k]?.estado))return;
+        const st=statsAlumno(id,k);
+        if(st.pctA===null||st.pctA>=80)return;
+        hayAlertas=true;
+        const color=st.pctA<70?'#9b2c2c':'#744210';
+        const bg=st.pctA<70?'#fff5f5':'#fffaf0';
+        html+=`<tr style="background:${bg}"><td><strong>${n}</strong></td><td>${c.nombre}</td>
+          <td style="font-weight:800;color:${color}">${st.pctA}%</td>
+          <td style="color:#9b2c2c">${st.a} / ${st.dias} días</td></tr>`;
+      });
+    });
+    if(!hayAlertas)html+=`<tr><td colspan="4" style="text-align:center;color:#718096;padding:20px">✅ Ningún alumno tiene alertas activas.</td></tr>`;
+    html+=`</table></div></div>`;
+  }else if(window._vistaDir==='resumen'){
+    html+=`<div class="tabs" style="margin-bottom:12px">`;
+    cursos.forEach(([id,c])=>{html+=`<button class="tab${window._resumenCursoDir===id?' act':''}" onclick="window._setDirCurso('${id}')">${c.nombre}</button>`;});
+    html+=`</div>`;
+    const cid=window._resumenCursoDir||(cursos[0]?.[0]);
+    if(cid){window._resumenCursoDir=cid;html+=renderDocenteResumen(cid);}
+  }else{
+    html+=`<div class="stat-grid">
+      <div class="stat-card"><div class="sv svb">${cursos.length}</div><div class="sl">Cursos</div></div>
+      <div class="stat-card"><div class="sv svb">${totalDocentes}</div><div class="sl">Docentes</div></div>
+      <div class="stat-card"><div class="sv svb">${totalAlumnos}</div><div class="sl">Alumnos</div></div>
+      <div class="stat-card"><div class="sv ${pctGlobal>=75?'svg':'svr'}">${pctGlobal!==null?pctGlobal+'%':'—'}</div><div class="sl">% Asist. mes</div></div>
+      <div class="stat-card"><div class="sv svb">${totP||'—'}</div><div class="sl">Presencias mes</div></div>
+      <div class="stat-card"><div class="sv svr">${totA||'—'}</div><div class="sl">Ausencias mes</div></div>
+    </div>
+    <div class="card"><h2>📊 Resumen por curso — ${MES[M-1]} ${Y}</h2>
+    <div class="table-wrap"><table>
+    <tr><th>Curso</th><th>Docente</th><th>Alumnos</th><th>Días reg.</th><th>% Asist.</th><th>Alertas</th></tr>`;
+    cursos.forEach(([id,c])=>{
+      const docente=INST.docentes?.[c.docenteId]?.nombre||'—';
+      const alumnos=(c.varones||[]).length+(c.mujeres||[]).length+(c.domi||[]).length;
+      const attC=INST.asistencia?.[id]||{};
+      let dias=0,cp=0,cpos=0,alertas=0;
+      Object.entries(attC).forEach(([fecha,datos])=>{if(!fecha.startsWith(prefix)||datos._tipo)return;dias++;cp+=(c.varones||[]).filter((_,i)=>datos['v'+i]==='P').length+(c.mujeres||[]).filter((_,i)=>datos['m'+i]==='P').length;cpos+=(c.varones||[]).length+(c.mujeres||[]).length;});
+      [...(c.varones||[]).map((_,i)=>'v'+i),...(c.mujeres||[]).map((_,i)=>'m'+i)].forEach(k=>{if(!esInactivo(c.alumnosData?.[k]?.estado)){const st=statsAlumno(id,k);if(st.pctA!==null&&st.pctA<80)alertas++;}});
+      const pct=cpos>0?Math.round(cp/cpos*100):null;
+      const color=pct===null?'#718096':pct>=75?'#276749':'#9b2c2c';
+      html+=`<tr><td><strong>${c.nombre}</strong></td><td>${docente}</td><td>${alumnos}</td>
+        <td>${dias}</td><td style="font-weight:800;color:${color}">${pct!==null?pct+'%':'—'}</td>
+        <td>${alertas>0?`<span class="alert-${alertas>3?'red':'yellow'}">${alertas}</span>`:'✅'}</td></tr>`;
+    });
+    html+=`</table></div></div>`;
+  }
+  document.getElementById('view-directivo').innerHTML=html;
+}
+window._setVistaDir=function(v){window._vistaDir=v;renderDirectivo();};
+window._setDirCurso=function(id){window._resumenCursoDir=id;renderDirectivo();};
+
+// ══════════════════════════════════════
+//  VISTA ADMIN
+// ══════════════════════════════════════
+function renderAdmin(){
+  const instId=SESSION.instId;
+  const docentes=Object.entries(INST.docentes||{});
+  const cursos=Object.entries(INST.cursos||{});
+
+  let html=`<div class="card">
+    <h2>🔑 Códigos de acceso</h2>
+    <div class="code-box"><div class="code-lbl">Código de institución</div>
+      <div class="code-val">${instId} <button class="code-copy" onclick="copiarTexto('${instId}')">Copiar</button></div></div>
+    <div class="code-box"><div class="code-lbl">Código de preceptoría</div>
+      <div class="code-val">${INST.codes?.preceptor||'—'} <button class="code-copy" onclick="copiarTexto('${INST.codes?.preceptor}')">Copiar</button></div></div>
+    <div class="code-box"><div class="code-lbl">Código de dirección</div>
+      <div class="code-val">${INST.codes?.directivo||'—'} <button class="code-copy" onclick="copiarTexto('${INST.codes?.directivo}')">Copiar</button></div></div>
+  </div>
+
+  <div class="card">
+    <h2>👨‍🏫 Docentes <button class="btn btn-blue" style="margin-left:auto" onclick="window._abrirNuevoDocente()">+ Nuevo docente</button></h2>`;
+  if(!docentes.length){html+=`<div class="empty-state"><div class="eico">👤</div><p>Sin docentes.</p></div>`;}
+  else{
+    html+=`<div class="table-wrap"><table><tr><th>Nombre</th><th>Código</th><th>Cursos</th><th></th></tr>`;
+    docentes.forEach(([id,d])=>{
+      const nc=cursos.filter(([,c])=>c.docenteId===id).length;
+      html+=`<tr><td><strong>${d.nombre}</strong></td>
+        <td><code style="background:#edf2f7;padding:3px 8px;border-radius:6px;letter-spacing:2px;font-size:13px">${d.codigo}</code>
+        <button class="btn btn-gray" style="padding:4px 8px;font-size:11px;margin-left:6px" onclick="copiarTexto('${d.codigo}')">Copiar</button></td>
+        <td>${nc} curso${nc!==1?'s':''}</td>
+        <td><button class="btn btn-red" style="padding:5px 10px;font-size:11px" onclick="window._elimDocente('${id}')">✕</button></td></tr>`;
+    });
+    html+=`</table></div>`;
+  }
+  html+=`</div>
+
+  <div class="card">
+    <h2>📚 Cursos <button class="btn btn-blue" style="margin-left:auto" onclick="window._abrirNuevoCurso()">+ Nuevo curso</button></h2>`;
+  if(!cursos.length){html+=`<div class="empty-state"><div class="eico">📖</div><p>Sin cursos.</p></div>`;}
+  else{
+    html+=`<div class="table-wrap"><table><tr><th>Curso</th><th>Docente</th><th>Alumnos</th><th></th></tr>`;
+    cursos.forEach(([id,c])=>{
+      const docente=INST.docentes?.[c.docenteId]?.nombre||'—';
+      const alumnos=(c.varones||[]).length+(c.mujeres||[]).length+(c.domi||[]).length;
+      html+=`<tr><td><strong>${c.nombre}</strong></td><td>${docente}</td><td>${alumnos}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-gray" style="padding:5px 10px;font-size:11px" onclick="window._abrirAlumnos('${id}')">👥 Alumnos</button>
+          <button class="btn btn-red" style="padding:5px 10px;font-size:11px" onclick="window._elimCurso('${id}')">✕</button>
+        </td></tr>`;
+    });
+    html+=`</table></div>`;
+  }
+  html+=`</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card" style="border:2px solid #f6ad55">
+      <h2>🔄 Ciclo lectivo</h2>
+      <div style="font-size:26px;font-weight:900;color:#1a365d;margin-bottom:8px">${INST.ciclo||'—'}</div>
+      <p style="font-size:12px;color:#718096;margin-bottom:12px">Al iniciar un nuevo ciclo, la asistencia se archiva y se empieza de cero.</p>
+      <button class="btn btn-orange" onclick="window._abrirNuevoCiclo()">🔄 Nuevo ciclo</button>
+      ${INST.historial?`<div style="margin-top:10px;font-size:11px;color:#718096">Archivados: ${Object.keys(INST.historial).join(', ')}</div>`:''}
+    </div>
+    <div class="card" style="border:2px solid #bee3f8">
+      <h2>🔐 Contraseña admin</h2>
+      <p style="font-size:12px;color:#718096;margin-bottom:12px">Cambiá la contraseña de acceso de administrador.</p>
+      <button class="btn btn-blue" onclick="window._abrirCambioPass()">🔐 Cambiar contraseña</button>
+    </div>
+  </div>`;
+
+  document.getElementById('view-admin').innerHTML=html;
+}
+
+// ── Admin: docentes ──
+window._abrirNuevoDocente=function(){document.getElementById('md-nombre').value='';openMod('md-docente');};
+window.guardarDocente=async function(){
+  const nombre=document.getElementById('md-nombre').value.trim();
+  if(!nombre){alert('Ingresá el nombre.');return;}
+  const codigo=genCode('DOC');
+  await push(ref(`instituciones/${SESSION.instId}/docentes`),{nombre,codigo});
+  closeMod('md-docente');toast('✓ Docente creado — código: '+codigo);
+};
+window._elimDocente=async function(id){
+  if(!confirm('¿Eliminás este docente?'))return;
+  await remove(ref(`instituciones/${SESSION.instId}/docentes/${id}`));
+};
+
+// ── Admin: cursos ──
+window._abrirNuevoCurso=function(){
+  editCursoId=null;document.getElementById('md-curso-title').textContent='Nuevo curso';
+  document.getElementById('mc-nombre').value='';
+  const sel=document.getElementById('mc-docente');
+  sel.innerHTML='<option value="">— Sin asignar —</option>'+Object.entries(INST.docentes||{}).map(([id,d])=>`<option value="${id}">${d.nombre}</option>`).join('');
+  openMod('md-curso');
+};
+window.guardarCurso=async function(){
+  const nombre=document.getElementById('mc-nombre').value.trim();
+  const docenteId=document.getElementById('mc-docente').value;
+  if(!nombre){alert('Ingresá el nombre.');return;}
+  const data={nombre,docenteId,varones:[],mujeres:[],domi:[]};
+  if(editCursoId)await update(ref(`instituciones/${SESSION.instId}/cursos/${editCursoId}`),{nombre,docenteId});
+  else await push(ref(`instituciones/${SESSION.instId}/cursos`),data);
+  closeMod('md-curso');toast('✓ Curso guardado');
+};
+window._elimCurso=async function(id){
+  if(!confirm('¿Eliminás este curso y toda su asistencia?'))return;
+  await remove(ref(`instituciones/${SESSION.instId}/cursos/${id}`));
+  await remove(ref(`instituciones/${SESSION.instId}/asistencia/${id}`));
+};
+
+// ── Admin: alumnos ──
+const _prefixMap={varones:'v',mujeres:'m',domi:'d'};
+window._abrirAlumnos=function(cursoId){
+  const curso=INST.cursos[cursoId];
+  document.getElementById('md-alumnos-title').textContent='👥 '+curso.nombre;
+  document.getElementById('md-alumnos-body').innerHTML=renderAlumnosModal(cursoId);
+  openMod('md-alumnos');
+};
+function renderAlumnosModal(cursoId){
+  const curso=INST.cursos[cursoId];
+  function lista(tipo,arr,label){
+    const px=_prefixMap[tipo];
+    return `<h3>${label}</h3><div id="al-${tipo}">
+      ${arr.map((n,i)=>{
+        const k=px+i;const ficha=curso.alumnosData?.[k]||{};
+        const tieneFicha=Object.values(ficha).some(v=>v&&v!=='');
+        const estado=ficha.estado||'activo';
+        return `<div style="display:flex;align-items:center;background:#f7fafc;border-radius:8px;padding:8px 12px;margin-bottom:6px;gap:8px">
+          <span class="estado-dot" style="background:${estadoColor(estado)}"></span>
+          <span style="flex:1;font-size:13px">${n} ${!esInactivo(estado)?'':`<em style="font-size:10px;color:#a0aec0">(${estadoLabel(estado)})</em>`}</span>
+          <button onclick="window._abrirFicha('${cursoId}','${tipo}',${i})"
+            style="background:${tieneFicha?'#c6f6d5':'#edf2f7'};color:${tieneFicha?'#276749':'#4a5568'};border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">
+            ${tieneFicha?'✓ Ficha':'+ Ficha'}</button>
+          <button onclick="window._abrirTransferir('${cursoId}','${tipo}',${i})"
+            style="background:#ebf4ff;color:#2b6cb0;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">⇄</button>
+          <button onclick="window._remAlumno('${cursoId}','${tipo}',${i})"
+            style="background:#fed7d7;color:#9b2c2c;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">✕</button>
+        </div>`;
+      }).join('')||'<p style="color:#a0aec0;font-size:12px;margin-bottom:8px">Sin alumnos.</p>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="inp" id="inp-al-${tipo}" type="text" placeholder="Apellido, Nombre..." style="margin-bottom:0;flex:1">
+      <button class="btn btn-blue" onclick="window._addAlumno('${cursoId}','${tipo}')">+</button>
+    </div>`;
+  }
+  return lista('varones',curso.varones||[],'♂ Varones')+lista('mujeres',curso.mujeres||[],'♀ Mujeres')+lista('domi',curso.domi||[],'🏠 Domiciliarios');
+}
+window._addAlumno=async function(cursoId,tipo){
+  const inp=document.getElementById(`inp-al-${tipo}`);const nombre=inp.value.trim();if(!nombre)return;
+  const arr=[...(INST.cursos[cursoId][tipo]||[]),nombre];
+  await update(ref(`instituciones/${SESSION.instId}/cursos/${cursoId}`),{[tipo]:arr});
+  inp.value='';document.getElementById('md-alumnos-body').innerHTML=renderAlumnosModal(cursoId);
+};
+window._remAlumno=async function(cursoId,tipo,i){
+  const arr=[...(INST.cursos[cursoId][tipo]||[])];
+  if(!confirm(`¿Eliminás a ${arr[i]}?`))return;
+  arr.splice(i,1);
+  await update(ref(`instituciones/${SESSION.instId}/cursos/${cursoId}`),{[tipo]:arr});
+  document.getElementById('md-alumnos-body').innerHTML=renderAlumnosModal(cursoId);
+};
+
+// ── Ficha del alumno ──
+window._abrirFicha=function(cursoId,tipo,index){
+  const curso=INST.cursos[cursoId];const arr=curso[tipo]||[];
+  const nombre=arr[index]||'Alumno';const px=_prefixMap[tipo];const key=px+index;
+  const ficha=curso.alumnosData?.[key]||{};
+  function calcEdad(fn){if(!fn)return'';const hoy=new Date(),nac=new Date(fn);let e=hoy.getFullYear()-nac.getFullYear();const m=hoy.getMonth()-nac.getMonth();if(m<0||(m===0&&hoy.getDate()<nac.getDate()))e--;return e;}
+  document.getElementById('md-ficha-title').textContent='📋 '+nombre;
+  document.getElementById('md-ficha-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="grid-column:1/-1"><label class="lbl">Estado del alumno</label>
+        <select class="inp" id="fi-estado" style="appearance:auto;margin-bottom:0">
+          ${['activo','suspendido','baja','egresado'].map(s=>`<option value="${s}"${ficha.estado===s?' selected':''}>${estadoLabel(s)}</option>`).join('')}
+        </select></div>
+      <div><label class="lbl">Fecha de Nacimiento</label>
+        <input class="inp" id="fi-fechaNac" type="date" value="${ficha.fechaNacimiento||''}" oninput="window._actualizarEdad()" style="margin-bottom:0"></div>
+      <div><label class="lbl">Edad (auto)</label>
+        <input class="inp" id="fi-edad" type="text" value="${calcEdad(ficha.fechaNacimiento)}" readonly style="background:#f7fafc;margin-bottom:0"></div>
+      <div><label class="lbl">Sexo</label>
+        <select class="inp" id="fi-sexo" style="appearance:auto;margin-bottom:0">
+          <option value="">— Seleccionar —</option>
+          ${['Masculino','Femenino','No binario','Otro'].map(s=>`<option value="${s}"${ficha.sexo===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div><label class="lbl">DNI</label>
+        <input class="inp" id="fi-dni" type="text" value="${ficha.dni||''}" placeholder="12.345.678" style="margin-bottom:0"></div>
+      <div><label class="lbl">Nacionalidad</label>
+        <input class="inp" id="fi-nacionalidad" type="text" value="${ficha.nacionalidad||''}" placeholder="Argentina" style="margin-bottom:0"></div>
+      <div><label class="lbl">Celular</label>
+        <input class="inp" id="fi-celular" type="text" value="${ficha.celular||''}" placeholder="11-1234-5678" style="margin-bottom:0"></div>
+      <div style="grid-column:1/-1"><label class="lbl">Domicilio</label>
+        <input class="inp" id="fi-domicilio" type="text" value="${ficha.domicilio||''}" placeholder="Calle 123, Ciudad" style="margin-bottom:0"></div>
+      <div style="grid-column:1/-1"><label class="lbl">Caracterización</label>
+        <input class="inp" id="fi-caracterizacion" type="text" value="${ficha.caracterizacion||''}" style="margin-bottom:0"></div>
+      <div><label class="lbl">CUD</label>
+        <input class="inp" id="fi-cud" type="text" value="${ficha.cud||''}" style="margin-bottom:0"></div>
+      <div><label class="lbl">Obra Social</label>
+        <input class="inp" id="fi-obraSocial" type="text" value="${ficha.obraSocial||''}" style="margin-bottom:0"></div>
+      <div><label class="lbl">Fecha de Alta</label>
+        <input class="inp" id="fi-fechaAlta" type="date" value="${ficha.fechaAlta||''}" style="margin-bottom:0"></div>
+      <div><label class="lbl">Fecha de Egreso</label>
+        <input class="inp" id="fi-fechaEgreso" type="date" value="${ficha.fechaEgreso||''}" style="margin-bottom:0"></div>
+      <div style="grid-column:1/-1;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:4px">
+        <strong style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px">Contacto de emergencia</strong></div>
+      <div><label class="lbl">Nombre</label>
+        <input class="inp" id="fi-contactoNombre" type="text" value="${ficha.contactoNombre||''}" placeholder="Familiar o tutor" style="margin-bottom:0"></div>
+      <div><label class="lbl">Celular</label>
+        <input class="inp" id="fi-contactoCelular" type="text" value="${ficha.contactoCelular||''}" placeholder="11-1234-5678" style="margin-bottom:0"></div>
+    </div>`;
+  document.getElementById('md-ficha-save').onclick=()=>window.guardarFicha(cursoId,tipo,index);
+  openMod('md-ficha');
+};
+window._actualizarEdad=function(){
+  const fn=document.getElementById('fi-fechaNac').value;if(!fn){document.getElementById('fi-edad').value='';return;}
+  const hoy=new Date(),nac=new Date(fn);let e=hoy.getFullYear()-nac.getFullYear();
+  const m=hoy.getMonth()-nac.getMonth();if(m<0||(m===0&&hoy.getDate()<nac.getDate()))e--;
+  document.getElementById('fi-edad').value=e;
+};
+window.guardarFicha=async function(cursoId,tipo,index){
+  const px=_prefixMap[tipo];const key=px+index;
+  const ficha={
+    estado:document.getElementById('fi-estado').value,
+    fechaNacimiento:document.getElementById('fi-fechaNac').value,
+    sexo:document.getElementById('fi-sexo').value,
+    dni:document.getElementById('fi-dni').value.trim(),
+    nacionalidad:document.getElementById('fi-nacionalidad').value.trim(),
+    domicilio:document.getElementById('fi-domicilio').value.trim(),
+    celular:document.getElementById('fi-celular').value.trim(),
+    caracterizacion:document.getElementById('fi-caracterizacion').value.trim(),
+    cud:document.getElementById('fi-cud').value.trim(),
+    obraSocial:document.getElementById('fi-obraSocial').value.trim(),
+    fechaAlta:document.getElementById('fi-fechaAlta').value,
+    fechaEgreso:document.getElementById('fi-fechaEgreso').value,
+    contactoNombre:document.getElementById('fi-contactoNombre').value.trim(),
+    contactoCelular:document.getElementById('fi-contactoCelular').value.trim()
+  };
+  await update(ref(`instituciones/${SESSION.instId}/cursos/${cursoId}/alumnosData`),{[key]:ficha});
+  closeMod('md-ficha');
+  document.getElementById('md-alumnos-body').innerHTML=renderAlumnosModal(cursoId);
+  toast('✓ Ficha guardada');
+};
+
+// ── Transferencia de alumno ──
+let _transferData={};
+window._abrirTransferir=function(cursoId,tipo,index){
+  const otrosCursos=Object.entries(INST.cursos||{}).filter(([id])=>id!==cursoId);
+  if(!otrosCursos.length){toast('No hay otros cursos disponibles.');return;}
+  const arr=INST.cursos[cursoId][tipo]||[];
+  const nombre=arr[index];
+  _transferData={cursoId,tipo,index};
+  document.getElementById('md-transfer-nombre').textContent=nombre;
+  const sel=document.getElementById('transfer-destino');
+  sel.innerHTML=otrosCursos.map(([id,c])=>`<option value="${id}">${c.nombre}</option>`).join('');
+  openMod('md-transfer');
+};
+window._confirmarTransfer=async function(){
+  const{cursoId,tipo,index}=_transferData;
+  const destinoId=document.getElementById('transfer-destino').value;
+  if(!destinoId)return;
+  const curso=INST.cursos[cursoId];const arr=[...(curso[tipo]||[])];
+  const nombre=arr[index];const px=_prefixMap[tipo];const key=px+index;
+  const ficha=curso.alumnosData?.[key]||null;
+  // Agregar al destino
+  const destino=INST.cursos[destinoId];const destArr=[...(destino[tipo]||[]),nombre];
+  await update(ref(`instituciones/${SESSION.instId}/cursos/${destinoId}`),{[tipo]:destArr});
+  if(ficha){
+    const newKey=px+(destArr.length-1);
+    await update(ref(`instituciones/${SESSION.instId}/cursos/${destinoId}/alumnosData`),{[newKey]:ficha});
+  }
+  // Eliminar del origen
+  arr.splice(index,1);
+  await update(ref(`instituciones/${SESSION.instId}/cursos/${cursoId}`),{[tipo]:arr});
+  closeMod('md-transfer');
+  document.getElementById('md-alumnos-body').innerHTML=renderAlumnosModal(cursoId);
+  toast('✓ Alumno transferido a '+destino.nombre);
+};
+
+// ── Cambio de contraseña ──
+window._abrirCambioPass=function(){
+  document.getElementById('pass-actual').value='';
+  document.getElementById('pass-nueva').value='';
+  document.getElementById('pass-confirm').value='';
+  document.getElementById('err-pass').classList.remove('on');
+  openMod('md-pass');
+};
+window.guardarCambioPass=async function(){
+  const actual=document.getElementById('pass-actual').value.trim().toUpperCase();
+  const nueva=document.getElementById('pass-nueva').value.trim();
+  const confirm_=document.getElementById('pass-confirm').value.trim();
+  const err=document.getElementById('err-pass');err.classList.remove('on');
+  if(actual!==INST.adminPass?.toUpperCase()){err.textContent='La contraseña actual es incorrecta.';err.classList.add('on');return;}
+  if(nueva.length<6){err.textContent='La nueva contraseña debe tener al menos 6 caracteres.';err.classList.add('on');return;}
+  if(nueva!==confirm_){err.textContent='Las contraseñas no coinciden.';err.classList.add('on');return;}
+  await update(ref(`instituciones/${SESSION.instId}`),{adminPass:nueva.toUpperCase()});
+  // Update session
+  SESSION.adminPass=nueva.toUpperCase();localStorage.setItem('ar_session',JSON.stringify(SESSION));
+  closeMod('md-pass');toast('✓ Contraseña actualizada');
+};
+
+// ── Ciclo lectivo ──
+window._abrirNuevoCiclo=function(){
+  const cicloActual=INST.ciclo||'—';const cursos=Object.entries(INST.cursos||{});
+  const proximo=String(new Date().getFullYear()+1);
+  const cursosHtml=cursos.length?cursos.map(([id,c])=>`
+    <div style="display:flex;align-items:center;gap:10px;background:#f7fafc;border-radius:8px;padding:10px 14px;margin-bottom:8px">
+      <input type="checkbox" id="ciclo-chk-${id}" checked style="width:18px;height:18px;cursor:pointer;accent-color:#1a365d">
+      <div style="flex:1"><strong style="font-size:13px">${c.nombre}</strong>
+        <div style="font-size:11px;color:#718096">${(c.varones||[]).length+(c.mujeres||[]).length+(c.domi||[]).length} alumnos · ${INST.docentes?.[c.docenteId]?.nombre||'Sin docente'}</div>
+      </div></div>`).join('')
+    :'<p style="color:#a0aec0;font-size:13px">Sin cursos.</p>';
+  document.getElementById('md-ciclo-body').innerHTML=`
+    <div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#78350f">
+      <strong>¿Qué hace esta acción?</strong><br>
+      • Archiva la asistencia de <strong>${cicloActual}</strong> — no se pierde nada<br>
+      • Limpia los registros para el nuevo ciclo<br>
+      • Los cursos marcados y sus alumnos/fichas se conservan<br>
+      • Los docentes se mantienen siempre
+    </div>
+    <label class="lbl">Nombre del nuevo ciclo</label>
+    <input class="inp" id="ciclo-nuevo-val" type="text" placeholder="Ej: 2026" value="${proximo}">
+    <label class="lbl">Cursos a conservar</label>${cursosHtml}`;
+  openMod('md-ciclo');
+};
+window._confirmarNuevoCiclo=async function(){
+  const nuevoCiclo=document.getElementById('ciclo-nuevo-val').value.trim();
+  if(!nuevoCiclo){alert('Ingresá el nombre del nuevo ciclo.');return;}
+  const cicloAnterior=INST.ciclo||'anterior';
+  if(!confirm(`¿Iniciás el ciclo "${nuevoCiclo}"?\n\nLa asistencia de "${cicloAnterior}" quedará archivada.`))return;
+  const instPath=`instituciones/${SESSION.instId}`;
+  const cursos=Object.entries(INST.cursos||{});
+  const[attSnap,curSnap]=await Promise.all([get(ref(`${instPath}/asistencia`)),get(ref(`${instPath}/cursos`))]);
+  await set(ref(`${instPath}/historial/${cicloAnterior}`),{ciclo:cicloAnterior,cursos:curSnap.val()||{},asistencia:attSnap.val()||{}});
+  await remove(ref(`${instPath}/asistencia`));
+  for(const[id] of cursos){const chk=document.getElementById(`ciclo-chk-${id}`);if(!chk||!chk.checked)await remove(ref(`${instPath}/cursos/${id}`));}
+  await update(ref(instPath),{ciclo:nuevoCiclo});
+  closeMod('md-ciclo');toast('✓ Ciclo '+nuevoCiclo+' iniciado');
+};
+
+// ── Helpers globales ──
+window.copiarTexto=function(txt){navigator.clipboard.writeText(txt).then(()=>toast('✓ Copiado: '+txt));};
+
+// ── INIT ──
+const savedSession=localStorage.getItem('ar_session');
+if(savedSession){
+  try{
+    const sess=JSON.parse(savedSession);
+    SESSION=sess;loginInstId=sess.instId;
+    document.getElementById('login-screen').classList.remove('on');
+    document.getElementById('hdr-inst').textContent=sess.instNombre;
+    const rl={docente:'👨‍🏫 Docente',preceptor:'📋 Preceptor',directivo:'🏫 Directivo',admin:'⚙️ Administrador'};
+    document.getElementById('hdr-role').textContent=rl[sess.rol]||sess.rol;
+    document.getElementById('app').classList.add('on');
+    cargarInstYMostrar();
+  }catch(e){localStorage.removeItem('ar_session');}
+}
+document.getElementById('inp-inst').addEventListener('keydown',e=>{if(e.key==='Enter')window.checkInst();});
+document.getElementById('inp-code').addEventListener('keydown',e=>{if(e.key==='Enter')window.checkCode();});
+</script>
+</body>
+</html>
